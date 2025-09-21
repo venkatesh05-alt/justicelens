@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JusticeLensAI - Multilingual Legal Advisor</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+body {
+  margin:0;
+  font-family: 'Segoe UI', sans-serif;
+  background: linear-gradient(135deg, #0f0f0f, #1a1a1a 60%, #2b2b2b);
+  color:white;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+}
+.chat-container {
+  max-width:520px;
+  width:95%;
+  background: rgba(20, 20, 20, 0.85);
+  border-radius:20px;
+  box-shadow:0 8px 40px rgba(0,0,0,0.6);
+  padding:28px;
+  display:flex;
+  flex-direction:column;
+  backdrop-filter: blur(10px);
+}
+.chat-header {
+  text-align:center;
+  font-size:1.7rem;
+  margin-bottom:12px;
+  color:#ffb84d;
+  font-family: 'Georgia', serif;
+}
+.chatbox {
+  width:100%;
+  min-height:260px;
+  background:rgba(34,34,34,0.9);
+  border-radius:16px;
+  padding:16px;
+  margin-bottom:14px;
+  overflow-y:auto;
+}
+.chat-message { margin-bottom:14px; display:flex; }
+.msg-bubble {
+  max-width:78%;
+  padding:12px 16px;
+  border-radius:16px;
+  font-size:1em;
+  line-height:1.4em;
+}
+.user-msg { justify-content:flex-end; }
+.user-msg .msg-bubble {
+  background:linear-gradient(135deg,#ff8800,#ffbb33);
+  color:#fff;
+}
+.ai-msg { justify-content:flex-start; }
+.ai-msg .msg-bubble {
+  background:#2d2d2d;
+  color:#ffdf70;
+}
+.input-row { display:flex; align-items:center; margin-top:10px; }
+.chat-input {
+  flex:1;
+  padding:12px 16px;
+  border-radius:10px;
+  border:none;
+  background:#2a2a2a;
+  color:#fff;
+  margin-right:10px;
+}
+.voice-btn {
+  padding:12px;
+  border:none;
+  border-radius:50%;
+  background:linear-gradient(135deg,#ff8800,#ffb84d);
+  color:#fff;
+  font-size:1.2em;
+  cursor:pointer;
+}
+.language-select {
+  margin-bottom:12px;
+  padding:8px;
+  border-radius:8px;
+  border:none;
+  background:#333;
+  color:white;
+  font-size:0.9em;
+}
+</style>
+</head>
+<body>
+<div class="chat-container">
+  <div class="chat-header"><i class="fas fa-gavel"></i> JusticeLensAI ⚖️<br>
+  <small>“Justice Delayed = Justice Denied”</small></div>
+
+  <!-- Language Selector -->
+  <select id="language" class="language-select">
+    <option value="en-US">🇬🇧 English</option>
+    <option value="hi-IN">🇮🇳 हिंदी</option>
+    <option value="ta-IN">🇮🇳 தமிழ்</option>
+    <option value="te-IN">🇮🇳 తెలుగు</option>
+  </select>
+
+  <div class="chatbox" id="chatbox"></div>
+
+  <div class="input-row">
+    <input type="text" id="chat-input" class="chat-input" placeholder="Ask your legal question..." autocomplete="off" />
+    <button class="voice-btn" id="start-voice"><i class="fas fa-microphone"></i></button>
+  </div>
+</div>
+
+<script>
+const chatbox = document.getElementById('chatbox');
+const chatInput = document.getElementById('chat-input');
+const startVoiceBtn = document.getElementById('start-voice');
+const languageSelect = document.getElementById('language');
+
+function appendMessage(text, sender) {
+  const msgDiv = document.createElement('div');
+  msgDiv.className = `chat-message ${sender}-msg`;
+  const bubble = document.createElement('div');
+  bubble.className = 'msg-bubble';
+  bubble.innerHTML = text;
+  msgDiv.appendChild(bubble);
+  chatbox.appendChild(msgDiv);
+  chatbox.scrollTop = chatbox.scrollHeight;
+}
+
+// Dummy multilingual answers
+function getDummyLegalAnswer(question, lang) {
+  question = question.toLowerCase();
+
+  // English
+  if(lang === "en-US") {
+    if(question.includes("theft")) return "⚖️ Theft under IPC Section 378 is punishable. Report immediately.";
+    if(question.includes("divorce")) return "👩‍⚖️ Divorce is under Hindu Marriage Act or Special Marriage Act.";
+    if(question.includes("rights")) return "⚖️ Citizens have fundamental rights under the Indian Constitution.";
+    return "Please consult a licensed advocate for more details.";
+  }
+
+  // Hindi
+  if(lang === "hi-IN") {
+    if(question.includes("चोरी")) return "⚖️ IPC धारा 378 के अंतर्गत चोरी दंडनीय है। तुरंत रिपोर्ट करें।";
+    if(question.includes("तलाक")) return "👩‍⚖️ तलाक हिंदू विवाह अधिनियम या विशेष विवाह अधिनियम के अंतर्गत आता है।";
+    if(question.includes("अधिकार")) return "⚖️ हर नागरिक को मौलिक अधिकार भारतीय संविधान से प्राप्त हैं।";
+    return "कृपया किसी वकील से संपर्क करें।";
+  }
+
+  // Tamil
+  if(lang === "ta-IN") {
+    if(question.includes("திருட்டு")) return "⚖️ IPC பிரிவு 378 படி திருட்டு தண்டனைக்குரியது.";
+    if(question.includes("விவாகரத்து")) return "👩‍⚖️ விவாகரத்து இந்து திருமண சட்டம் அல்லது சிறப்பு திருமண சட்டத்தின் கீழ் உள்ளது.";
+    if(question.includes("உரிமைகள்")) return "⚖️ இந்திய அரசியலமைப்பின் கீழ் அனைவருக்கும் அடிப்படை உரிமைகள் உண்டு.";
+    return "மேலும் விவரங்களுக்கு வழக்கறிஞரை அணுகவும்.";
+  }
+
+  // Telugu
+  if(lang === "te-IN") {
+    if(question.includes("దొంగతనం")) return "⚖️ IPC సెక్షన్ 378 ప్రకారం దొంగతనం శిక్షార్హం.";
+    if(question.includes("వివాహమునుపు")) return "👩‍⚖️ విడాకులు హిందూ వివాహ చట్టం లేదా ప్రత్యేక వివాహ చట్టం కింద వస్తాయి.";
+    if(question.includes("హక్కులు")) return "⚖️ ప్రతి పౌరుడికి భారత రాజ్యాంగం ప్రకారం మౌలిక హక్కులు ఉన్నాయి.";
+    return "దయచేసి న్యాయవాదిని సంప్రదించండి.";
+  }
+
+  return "⚖️ Language not supported yet.";
+}
+
+function handleUserInput(text) {
+  if (!text.trim()) return;
+  const lang = languageSelect.value;
+  appendMessage(text, 'user');
+  chatInput.value = '';
+
+  const answer = getDummyLegalAnswer(text, lang);
+  appendMessage(answer, 'ai');
+
+  const speech = new SpeechSynthesisUtterance(answer);
+  speech.lang = lang;
+  window.speechSynthesis.speak(speech);
+}
+
+chatInput.addEventListener('keydown', function(e){
+  if(e.key === 'Enter'){
+    handleUserInput(chatInput.value);
+  }
+});
+
+function startVoiceChat(){
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SpeechRecognition){
+    appendMessage("❌ Voice recognition not supported.", 'ai');
+    return;
+  }
+  const recognition = new SpeechRecognition();
+  recognition.lang = languageSelect.value;
+  recognition.interimResults = false;
+  recognition.start();
+  appendMessage("🎤 Listening...", 'ai');
+  recognition.onresult = function(event){
+    const userText = event.results[0][0].transcript;
+    appendMessage(userText, 'user');
+    const answer = getDummyLegalAnswer(userText, languageSelect.value);
+    appendMessage(answer, 'ai');
+    const speech = new SpeechSynthesisUtterance(answer);
+    speech.lang = languageSelect.value;
+    window.speechSynthesis.speak(speech);
+  }
+}
+startVoiceBtn.addEventListener("click", startVoiceChat);
+</script>
+</body>
+</html>
